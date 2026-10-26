@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>QR Stickers</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --ink: #1d1b2c; --btn: #35344a; --muted: #74728a; --line: #e2e1e8; --citi-navy: #13317d; --citi-blue: #1a76dc; --citi-red: #e4002b; color-scheme: light; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f2f2f5; font-family: "Outfit", system-ui, sans-serif; color: var(--ink); }
+    .controls { max-width: 900px; margin: 0 auto; padding: 24px 16px 8px; }
+    h1 { margin: 0 0 4px; font-size: 26px; }
+    .controls p { margin: 0 0 16px; color: var(--muted); line-height: 1.4; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+    label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 600; }
+    input, select { font: inherit; font-weight: 400; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; min-width: 0; }
+    label.grow { flex: 1 1 280px; }
+    button { font: inherit; font-weight: 600; border: 0; border-radius: 22px; padding: 11px 22px; background: var(--btn); color: #fff; cursor: pointer; }
+    button.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    .sheet { max-width: 900px; margin: 16px auto 40px; padding: 10mm; background: #fff; display: flex; flex-wrap: wrap; gap: 6mm; justify-content: center; box-shadow: 0 2px 16px rgba(0,0,0,.08); }
+
+    .sticker { width: var(--w); border: 0.4mm solid #d9d8e0; border-radius: calc(var(--w) * .07); overflow: hidden; background: #fff; break-inside: avoid; page-break-inside: avoid; display: flex; flex-direction: column; align-items: center; }
+    .sticker .top { padding: calc(var(--w) * .07) 0 calc(var(--w) * .03); }
+    .logo { display: inline-flex; font-weight: 600; letter-spacing: -.035em; line-height: 1; font-size: calc(var(--w) * .15); }
+    .logo .citi { position: relative; color: var(--citi-navy); margin-right: .04em; }
+    .logo .citi::before { content: ""; position: absolute; left: .62em; top: -.05em; width: .9em; height: .34em; border: .085em solid var(--citi-red); border-bottom: 0; border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+    .logo .bike { color: var(--citi-blue); }
+    .qr { width: 84%; display: block; }
+    .qr svg { display: block; width: 100%; height: auto; }
+    .band { width: 100%; margin-top: calc(var(--w) * .04); background: var(--btn); color: #fff; text-align: center; padding: calc(var(--w) * .045) 0 calc(var(--w) * .05); }
+    .band b { display: flex; align-items: center; justify-content: center; gap: .35em; font-size: calc(var(--w) * .095); font-weight: 600; }
+    .band b svg { width: 1.05em; height: 1.05em; }
+    .band span { display: block; margin-top: .25em; font-size: calc(var(--w) * .062); opacity: .8; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+
+    @page { size: auto; margin: 10mm; }
+    @media print {
+      body { background: #fff; }
+      .controls { display: none; }
+      .sheet { box-shadow: none; margin: 0; padding: 0; max-width: none; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <h1>QR stickers</h1>
+    <p>Print this page and stick the codes on your costumes. Every sticker gets its own bike number, which shows up when someone scans it. For scanning from a distance in a dark room, use the big size.</p>
+    <div class="row">
+      <label class="grow">Link
+        <input id="url" type="url" spellcheck="false">
+      </label>
+      <label>Size
+        <select id="size">
+          <option value="50">Small (5 cm)</option>
+          <option value="70">Medium (7 cm)</option>
+          <option value="100" selected>Large (10 cm)</option>
+          <option value="150">Huge (15 cm)</option>
+        </select>
+      </label>
+      <label>How many
+        <input id="count" type="number" min="1" max="40" value="4" style="width: 90px">
+      </label>
+      <button class="ghost" id="shuffle">New numbers</button>
+      <button id="print">Print</button>
+    </div>
+  </div>
+  <div class="sheet" id="sheet"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script>
+    (() => {
+      const $ = s => document.querySelector(s);
+      const QR_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path fill="currentColor" stroke="none" d="M13.5 13.5H16V16h-2.5zM17.5 17.5H20V20h-2.5zM13.5 18H16v2h-2.5zM18 13.5h2V16h-2z"/></svg>';
+      const rand = () => 100 + Math.floor(Math.random() * 900);
+      let bikes = [];
+
+      $('#url').value = location.origin + '/';
+
+      function qrSvg(text) {
+        const qr = qrcode(0, 'M');
+        qr.addData(text);
+        qr.make();
+        const n = qr.getModuleCount();
+        const q = 2; // quiet zone in modules
+        let d = '';
+        for (let r = 0; r < n; r++) {
+          for (let c = 0; c < n; c++) if (qr.isDark(r, c)) d += `M${c + q} ${r + q}h1v1h-1z`;
+        }
+        const s = n + q * 2;
+        return `<svg viewBox="0 0 ${s} ${s}" shape-rendering="crispEdges"><rect width="${s}" height="${s}" fill="#fff"/><path d="${d}" fill="#1d1b2c"/></svg>`;
+      }
+
+      function render() {
+        const count = Math.max(1, Math.min(40, +$('#count').value || 1));
+        while (bikes.length < count) bikes.push(`${rand()}-${rand()}`);
+        const base = $('#url').value.trim() || location.origin + '/';
+        const w = $('#size').value + 'mm';
+        $('#sheet').innerHTML = bikes.slice(0, count).map(b => {
+          let link;
+          try { const u = new URL(base); u.searchParams.set('b', b); link = u.toString(); }
+          catch (e) { link = base; }
+          return `<div class="sticker" style="--w:${w}">
+            <div class="top"><span class="logo"><span class="citi">citi</span><span class="bike">bike</span></span></div>
+            <div class="qr">${qrSvg(link)}</div>
+            <div class="band"><b>${QR_ICON}Scan to unlock</b><span>${b}</span></div>
+          </div>`;
+        }).join('');
+      }
+
+      $('#url').addEventListener('input', render);
+      $('#size').addEventListener('change', render);
+      $('#count').addEventListener('input', render);
+      $('#shuffle').addEventListener('click', () => { bikes = []; render(); });
+      $('#print').addEventListener('click', () => window.print());
+      render();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="A Halloween costume parody. Not affiliated with Citi Bike, Lyft or Citi.">
+  <title>Citi Bike 🎃</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- Splash -->
+  <div id="splash"><span class="logo logo-xl"><span class="citi">citi</span><span class="bike">bike</span></span></div>
+
+  <!-- Home: map -->
+  <section id="home" class="screen">
+    <div id="homeMap" class="map"></div>
+    <div class="topbar">
+      <button class="sq-btn" id="menuBtn" aria-label="Menu" data-ic="menu"></button>
+      <button class="search" id="searchBtn"><span data-ic="search"></span>Get directions</button>
+      <button class="sq-btn" id="flagBtn" aria-label="Games" data-ic="flag"></button>
+    </div>
+    <div class="bottom">
+      <button class="sq-btn locate" id="locateBtn" aria-label="Locate me" data-ic="locate"></button>
+
+      <div class="card" id="homeCard">
+        <div class="home-row">
+          <div>
+            <div class="hi">Hi trick-or-treater</div>
+            <div class="ride">Ride a bike</div>
+          </div>
+          <button class="btn-dark" id="scanBtn"><span data-ic="qr"></span>Scan</button>
+        </div>
+      </div>
+
+      <div class="card" id="stationCard" hidden>
+        <div class="handle"></div>
+        <button class="x-btn" id="stationClose" aria-label="Close" data-ic="close"></button>
+        <h3 id="stName">Station</h3>
+        <div class="st-meta"><span class="logo logo-sm"><span class="citi">citi</span><span class="bike">bike</span></span><span>· $4.79 unlock, 1 candy per min</span><button class="info" id="priceInfo" aria-label="Pricing info" data-ic="info"></button></div>
+        <div class="stats">
+          <div><b id="stClassic">0</b><span>classic</span></div>
+          <div><b id="stEbikes">0</b><span>ebikes</span></div>
+          <div><b id="stDocks">0</b><span>open docks</span></div>
+        </div>
+        <button class="btn-dark btn-wide" id="stUnlock"><span data-ic="qr"></span>Scan to unlock</button>
+      </div>
+
+      <div class="card" id="transitCard" hidden>
+        <div class="handle"></div>
+        <h3>Public transit</h3>
+        <div id="transitList"></div>
+      </div>
+
+      <nav class="tabbar">
+        <button class="tab active" id="tabBike" aria-label="Bikes" data-ic="bike"></button>
+        <button class="tab" id="tabTransit" aria-label="Transit" data-ic="train"></button>
+      </nav>
+    </div>
+  </section>
+
+  <!-- Minigame: Find a Dock -->
+  <section id="game" class="screen" hidden>
+    <div id="gameMap" class="map"></div>
+    <div class="topbar">
+      <button class="sq-btn" id="gameBack" aria-label="Back" data-ic="back"></button>
+      <div class="search game-title"><span data-ic="dock"></span><span id="gameHint">Find an open dock</span></div>
+    </div>
+    <div class="bottom">
+      <div class="card ride-card">
+        <div class="ride-kicker">Ride in progress</div>
+        <div class="ride-body">
+          <div class="ride-stats">
+            <div class="ride-line big"><span data-ic="clock"></span><span id="gTime">0:30</span><small>left</small></div>
+            <div class="ride-line big"><span data-ic="cash"></span><span id="gFee">$4.79</span></div>
+            <div class="ride-line"><b id="gScore">0</b>&nbsp;docked<span class="bolt" data-ic="bolt"></span><span class="muted" id="gBest"></span></div>
+          </div>
+          <div class="ride-bike">
+            <div class="bike-circle" data-art="bike"></div>
+            <div class="bike-pill" id="gBike">143-523</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="overlay" id="gameOverlay" hidden>
+      <div class="backdrop"></div>
+      <div class="sheet" id="gameSheet"></div>
+    </div>
+  </section>
+
+  <!-- Ride history -->
+  <section id="history" class="screen page" hidden>
+    <header class="page-head">
+      <button class="sq-btn flat" id="historyBack" aria-label="Back" data-ic="back"></button>
+      <h1>Ride history</h1>
+    </header>
+    <div class="page-body" id="historyList"></div>
+  </section>
+
+  <!-- Unlock / failure sheet -->
+  <div class="overlay" id="unlockOverlay" hidden>
+    <div class="backdrop"></div>
+    <div class="sheet" id="unlockSheet"></div>
+  </div>
+
+  <!-- Fake QR scanner -->
+  <div class="scanner" id="scanner" hidden>
+    <button class="x-btn light" id="scannerClose" aria-label="Close" data-ic="close"></button>
+    <div class="scanner-title">Scan QR code</div>
+    <div class="viewfinder"><i></i><i></i><i></i><i></i><div class="laser"></div></div>
+    <p class="scanner-sub">Point your camera at the QR code on the bike's handlebars</p>
+    <button class="scanner-manual" id="scannerManual">Enter bike number</button>
+  </div>
+
+  <!-- Side menu -->
+  <div class="drawer" id="drawer" hidden>
+    <div class="backdrop"></div>
+    <aside class="drawer-panel">
+      <div class="drawer-head">
+        <div class="avatar">🎃</div>
+        <div>
+          <div class="drawer-name">Trick-or-Treater</div>
+          <div class="muted">Member since 10/31</div>
+        </div>
+      </div>
+      <nav class="drawer-nav">
+        <button data-go="game"><span data-ic="game"></span>Find a Dock<em class="badge-new">Play</em></button>
+        <button data-go="history"><span data-ic="history"></span>Ride history</button>
+        <button data-toast="wallet"><span data-ic="wallet"></span>Wallet</button>
+        <button data-toast="angels"><span data-ic="angel"></span>Bike Angels</button>
+        <button data-toast="help"><span data-ic="help"></span>Help</button>
+      </nav>
+      <div class="drawer-more">
+        <div class="muted small">More minigames coming soon</div>
+      </div>
+      <p class="fine">🎃 Halloween costume parody.<br>Not affiliated with Citi Bike, Lyft or Citi.</p>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
+<script src="js/stations.js"></script>
+<script src="js/content.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
