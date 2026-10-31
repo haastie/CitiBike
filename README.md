@@ -21,6 +21,7 @@ Open `js/content.js`:
 - `REASONS`: redenen waarom de fiets niet beschikbaar is (titel, tekst, foutcode)
 - `CONFIG.center`: middelpunt van de kaart (nu Flatiron, W 23rd St & 6th Ave). Zet hier de locatie van het feest.
 - `CONFIG.gameSeconds`: duur van de minigame
+- `TIP`: je Zelle-adres en naam voor de grote **Give a tip**-knop (Zelle heeft geen betaallink, dus de knop kopieert het e-mailadres en legt uit hoe je via je bank-app betaalt)
 - `HISTORY`, `TRANSIT`, `TOASTS`, `MISS_LINES`, `RANKS`: overige teksten
 
 ## Lokaal bekijken

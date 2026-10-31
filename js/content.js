@@ -7,6 +7,13 @@ window.CONFIG = {
   gameSeconds: 30,
 };
 
+// "Give a tip" button. Zelle has no web payment link, so the tip sheet copies
+// this email and tells people to paste it into Zelle in their bank app.
+window.TIP = {
+  zelle: "jellevhaasteren@gmail.com",
+  name: "Jelle",
+};
+
 // Shown when someone "unlocks" a bike. t = title, b = body, c = error code.
 window.REASONS = [
   { t: "This bike is drunk", b: "It's had four beers and a tequila shot. For everyone's safety, it's locked until brunch tomorrow.", c: "BAC-012" },

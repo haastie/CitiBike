@@ -39,6 +39,7 @@
           </div>
           <button class="btn-dark" id="scanBtn"><span data-ic="qr"></span>Scan</button>
         </div>
+        <button class="btn-tip" data-tip><span data-ic="tip"></span>Give a tip<em>via Zelle</em></button>
       </div>
 
       <div class="card" id="stationCard" hidden>
@@ -111,6 +112,12 @@
     <div class="sheet" id="unlockSheet"></div>
   </div>
 
+  <!-- Tip sheet (Zelle) -->
+  <div class="overlay tip-overlay" id="tipOverlay" hidden>
+    <div class="backdrop"></div>
+    <div class="sheet" id="tipSheet"></div>
+  </div>
+
   <!-- Fake QR scanner -->
   <div class="scanner" id="scanner" hidden>
     <button class="x-btn light" id="scannerClose" aria-label="Close" data-ic="close"></button>
@@ -133,6 +140,7 @@
       </div>
       <nav class="drawer-nav">
         <button data-go="game"><span data-ic="game"></span>Find a Dock<em class="badge-new">Play</em></button>
+        <button data-tip><span data-ic="tip"></span>Give a tip<em class="badge-new badge-tip">Zelle</em></button>
         <button data-go="history"><span data-ic="history"></span>Ride history</button>
         <button data-toast="wallet"><span data-ic="wallet"></span>Wallet</button>
         <button data-toast="angels"><span data-ic="angel"></span>Bike Angels</button>

@@ -27,6 +27,9 @@
     help: '<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 1 1 3.4 2.3c-.7.3-1 .9-1 1.6v.4"/><circle class="f" cx="12" cy="16.8" r="1.2"/>',
     share: '<path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>',
     replay: '<path d="M20.5 12a8.5 8.5 0 1 1-2.5-6"/><path d="M20.5 4v4.5H16"/>',
+    tip: '<circle cx="12" cy="12" r="9"/><path d="M15 9.3c-.5-.9-1.6-1.5-3-1.5-1.7 0-2.9.9-2.9 2.1 0 3 5.9 1.5 5.9 4.3 0 1.3-1.3 2.1-3 2.1-1.4 0-2.6-.6-3.1-1.6M12 5.8v2M12 16.3v1.9"/>',
+    copy: '<rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2.5"/><path d="M15.5 8.5V6.5a2.5 2.5 0 0 0-2.5-2.5H6.5A2.5 2.5 0 0 0 4 6.5V13a2.5 2.5 0 0 0 2.5 2.5h2"/>',
+    check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
   };
   const ic = (name, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
 
@@ -312,12 +315,14 @@
         <h2>${esc(r.t)}</h2>
         <p>${esc(r.b)}</p>
         <p class="code">ERROR CODE ${esc(r.c)}</p>
+        ${TIP_BUTTON}
         <button class="btn-dark" id="retryBtn">Try another bike</button>
         <button class="btn-ghost" id="playBtn">${ic('game')}Play Find a Dock while you wait</button>
         <p class="fine">🎃 Halloween costume parody · not affiliated with Citi Bike or Lyft</p>`;
       this.sheet.scrollTop = 0;
       sfx.fail();
       buzz([40, 60, 40]);
+      wireTips(this.sheet);
       $('#unlockClose').onclick = () => this.close();
       $('#retryBtn').onclick = () => this.open();
       $('#playBtn').onclick = () => { this.close(); go('game'); };
@@ -335,6 +340,82 @@
     },
   };
   $('#unlockOverlay .backdrop').onclick = () => { if (!Unlock.busy) Unlock.close(); };
+
+  // ---------- tip (Zelle) ----------
+  // Zelle only lives inside bank apps and has no payment link, so: copy the email, explain the rest.
+  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* fall through */ }
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand('copy');
+      ta.remove();
+      return ok;
+    } catch (e) { return false; }
+  }
+
+  const Tip = {
+    el: $('#tipOverlay'),
+    sheet: $('#tipSheet'),
+
+    open() {
+      closeDrawer();
+      audio();
+      this.el.hidden = false;
+      this.sheet.innerHTML = `
+        <button class="x-btn" id="tipClose" aria-label="Close">${ic('close')}</button>
+        <div class="handle"></div>
+        <div class="tip-visual">${ic('tip')}</div>
+        <div class="kicker">Tip your bike</div>
+        <h2>Give a tip</h2>
+        <p>This bike has carried the party all night. Tips go straight to the human inside the costume.</p>
+        <div class="zelle-card">
+          <div class="zelle-label">Send with Zelle to</div>
+          <div class="zelle-email">${esc(TIP.zelle).replace('@', '<wbr>@')}</div>
+          ${TIP.name ? `<div class="zelle-name">${esc(TIP.name)} · the one dressed as a Citi Bike</div>` : ''}
+        </div>
+        <button class="btn-tip" id="tipCopy">${ic('copy')}<span>Copy email</span></button>
+        <ol class="tip-steps">
+          <li><span>Open your bank app and tap <b>Zelle</b></span></li>
+          <li><span>Tap <b>Send</b> and paste the email</span></li>
+          <li><span>Pick any amount. $5 buys this bike a slice 🍕</span></li>
+        </ol>
+        <button class="btn-ghost" id="tipDone">Done</button>
+        <p class="fine">Not affiliated with Zelle, Citi Bike, Lyft or Citi.</p>`;
+      this.sheet.scrollTop = 0;
+      $('#tipClose').onclick = () => this.close();
+      $('#tipDone').onclick = () => this.close();
+      $('#tipCopy').onclick = () => this.copy();
+      // Opened by a tap, so the clipboard is allowed: save them a step.
+      this.copy();
+    },
+
+    async copy() {
+      const btn = $('#tipCopy');
+      if (!btn) return;
+      const ok = await copyText(TIP.zelle);
+      if (!ok) {
+        toast('Couldn\'t copy. Press and hold the email to copy it.');
+        return;
+      }
+      btn.classList.add('done');
+      btn.innerHTML = `${ic('check')}<span>Email copied</span>`;
+      buzz(20);
+    },
+
+    close() { this.el.hidden = true; },
+  };
+  $('#tipOverlay .backdrop').onclick = () => Tip.close();
+
+  const TIP_BUTTON = `<button class="btn-tip" data-tip>${ic('tip')}Give a tip<em>via Zelle</em></button>`;
+  function wireTips(root = document) {
+    $$('[data-tip]', root).forEach(b => { b.onclick = () => Tip.open(); });
+  }
 
   // ---------- fake QR scanner ----------
   const Scanner = {
@@ -622,9 +703,11 @@
         <div class="rank"><b>${esc(rank[1])}</b><span>${esc(rank[2])}</span></div>
         <p class="code">TOTAL CHARGED $${this.fee().toFixed(2)} · LATE FEE WAIVED, IT'S HALLOWEEN</p>
         <button class="btn-dark" id="gAgain">${ic('replay')}Ride again</button>
+        ${TIP_BUTTON}
         ${navigator.share ? `<button class="btn-ghost" id="gShare">${ic('share')}Share score</button>` : ''}
         <button class="btn-ghost" id="gHome">Back to map</button>
         <p class="fine">🎃 Halloween costume parody · not affiliated with Citi Bike or Lyft</p>`);
+      wireTips($('#gameSheet'));
       $('#gAgain').onclick = () => this.start();
       $('#gHome').onclick = back;
       const share = $('#gShare');
@@ -700,6 +783,7 @@
   $('#scannerManual').onclick = () => toast(TOASTS.manual);
   $('#gameBack').onclick = back;
   $('#historyBack').onclick = back;
+  wireTips();
 
   // ---------- boot ----------
   Home.init();
